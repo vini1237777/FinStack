@@ -4,12 +4,14 @@
 
 
  # Tech Stack — 
- Node.js - Runtime for backend services,
- TypeScript - Type safety across the codebase,
- PostgreSQL -  relational integrity for double-entry accounting , 
- Prisma - Type-safe ORM with auto-generated migrations and schema versioning., 
- JWT - for authentication, 
- Swagger - for maintaining api docs.
+
+Node.js + Express — Backend API server
+React 19 — Frontend UI
+TypeScript — Type safety across frontend and backend
+PostgreSQL — Relational integrity for double-entry accounting
+Prisma — Type-safe ORM with auto-generated migrations
+JWT — Authentication
+Swagger — API documentation
 
 # Features (POC Scope) — 
 1) Purchase Module : Planned
