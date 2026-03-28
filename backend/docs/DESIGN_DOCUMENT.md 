@@ -131,7 +131,7 @@ Step 5 — Engine validates. Debit: 59000. Credit: 59000. Equal? Yes.
 Step 6 — Engine saves.
 
 
-3) Scenario 4:  Business Expense (Internet Bill with GST)
+4) Scenario 4:  Business Expense (Internet Bill with GST)
 
 
 Step 1 — User clicks "Record Expense." 
