@@ -4,6 +4,11 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1"
   },
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
