@@ -1,0 +1,224 @@
+--> What is FinStack
+A modular ERP system for Indian SMEs to manage sales, inventory, accounting, and GST compliance with 
+a double-entry accounting engine.
+
+--> Tech
+Node.js + Express — Backend API server
+TypeScript — Type safety across frontend and backend
+PostgreSQL — Relational integrity for double-entry accounting
+Prisma — it gives you type-safe database queries and handles migrations so your schema is version controlled.
+JWT — Authentication
+Swagger — API documentation
+
+
+--> Module Architecture
+Purchase Module
+  - depends on: Accounting Engine, GST Calculator, Inventory
+  - owns: purchase_orders, purchase_invoices, purchase_invoice_items, purchase_returns
+
+Sales Module
+  - depends on: Accounting Engine, GST Calculator, Inventory
+  - owns: sales_orders, sales_invoices, sales_invoice_items, sales_returns
+
+Expense Module
+  - depends on: Accounting Engine, GST Calculator
+  - owns: expense_vouchers
+
+Accounting Module (THE ENGINE)
+  - depends on: NOTHING
+  - owns: vouchers, ledger_entries, ledger_accounts, financial_years
+
+Ledger Module
+  - depends on: Accounting Module (reads from ledger_entries)
+  - owns: no extra tables, it reads from accounting tables
+
+Inventory Module
+  - depends on: NOTHING
+  - owns: items, item_categories, stock_movements, warehouses
+
+GST Module
+  - depends on: NOTHING (it's a calculator, it reads config and computes)
+  - owns: hsn_sac_codes, gst_config
+
+P&L / Reports Module
+  - depends on: Accounting Module (reads ledger_entries and aggregates)
+  - owns: no tables, it's pure read-only queries
+
+
+  READ-ONLY LAYER (just queries)
+     ┌──────────┬──────────┬─────────┐
+     │  Ledger  │ Reports  │   P&L   │
+     └────┬─────┴─────┬────┴────┬────┘
+          │ reads     │ reads   │ reads
+          ▼           ▼         ▼
+     TRANSACTION LAYER (creates data)
+     ┌──────────┬──────────┬─────────┐
+     │ Purchase │  Sales   │Expenses │
+     └──┬──┬──┬─┴──┬──┬──┬─┴──┬──┬──┘
+        │  │  │    │  │  │    │  │
+        ▼  ▼  ▼    ▼  ▼  ▼    ▼  ▼
+     FOUNDATION LAYER (no dependencies)
+     ┌──────────┬──────────┬─────────┐
+     │Accounting│Inventory │   GST   │
+     │  Engine  │          │  Calc   │
+     └──────────┴──────────┴─────────┘
+
+
+--> Accounting Engine Logic
+
+1) Scenario 1: You sell ₹10,000 worth of goods to a customer in the same state, 18% GST.
+Step 1 — Sales Module receives the request
+The user clicks "Create Invoice" on the frontend. The API receives: customer ID, list of items with quantities and prices.
+Step 2 — Sales Module calls GST Calculator
+It sends the item's HSN code, the amount (₹10,000), your state (MH), and the customer's state (MH). GST Calculator sees same state, returns:
+CGST: ₹900
+SGST: ₹900
+IGST: ₹0
+Total: ₹11,800
+Step 3 — Sales Module calls Inventory Service
+It says "reduce 5 units of Item X from Warehouse A." Inventory checks if stock is available, reduces it, records the movement.
+Step 4 — Sales Module builds the accounting entries
+This is the key part. The Sales Module creates an array:
+entries = [
+  { account: "Accounts Receivable (Customer)",  debit: 11800,  credit: 0     },
+  { account: "Sales Revenue",                   debit: 0,      credit: 10000 },
+  { account: "CGST Payable",                    debit: 0,      credit: 900   },
+  { account: "SGST Payable",                    debit: 0,      credit: 900   },
+]
+Step 5 — Sales Module sends this array to Accounting Engine
+The Sales Module does NOT save these entries itself. It calls accountingEngine.postVoucher(entries).
+Step 6 — Accounting Engine validates
+It adds up all debits: 11800. It adds up all credits: 10000 + 900 + 900 = 11800. Are they equal? Yes. Proceed.
+Step 7 — Accounting Engine saves
+Inside a single database transaction (prisma.$transaction), it creates the voucher header and all four ledger entries. If any one fails, all roll back. Nothing is half-saved.
+
+2) Scenario 2: You BUY goods from a supplier
+
+Purchase Module calls → GST Calculator
+Purchase Module calls → Inventory Service
+Purchase Module calls → Accounting Engine
+
+Step 1 — Purchase Module receives the request. User clicks "Record Purchase Invoice." API receives supplier ID, list of items, quantities, prices.
+Step 2 — Purchase Module calls GST Calculator. Sends HSN code, amount ₹50,000, your state (MH), supplier's state (GJ). Different states, so GST Calculator returns IGST ₹9,000.
+Step 3 — Purchase Module calls Inventory Service. It says "add 100 units of Item Y to Warehouse A." Inventory increases the stock, records the movement.
+Step 4 — Purchase Module builds the entries.
+entries = [
+  { account: "Purchase Account",            debit: 50000,  credit: 0     },
+  { account: "IGST Input Credit",           debit: 9000,   credit: 0     },
+  { account: "Accounts Payable (Supplier)", debit: 0,      credit: 59000 },
+]
+Step 5 — Purchase Module sends to Accounting Engine. Same postVoucher(entries) call.
+Step 6 — Engine validates. Debits: 50000 + 9000 = 59000. Credits: 59000. Equal? Yes.
+Step 7 — Engine saves atomically.
+
+
+3) Scenario 3:  You PAY the supplier
+
+
+Step 1 — User clicks "Pay Supplier." 
+         API receives: supplier ID, amount ₹59,000, bank account.
+
+Step 3 — Build entries:
+entries = [
+  { account: "Accounts Payable (Supplier)",  debit: 59000,  credit: 0     },
+  { account: "Bank Account",                 debit: 0,      credit: 59000 },
+]
+
+Step 4 — Send to Accounting Engine.
+
+Step 5 — Engine validates. Debit: 59000. Credit: 59000. Equal? Yes.
+
+Step 6 — Engine saves.
+
+
+3) Scenario 4:  Business Expense (Internet Bill with GST)
+
+
+Step 1 — User clicks "Record Expense." 
+         API receives: expense head (Internet), amount ₹5,000, 
+         HSN/SAC code, vendor state.
+
+Step 2 — Expense Module calls GST Calculator.
+         Sends: amount ₹5,000, SAC code, your state (MH), 
+         vendor state (MH). Same state → returns:
+         CGST: ₹450, SGST: ₹450
+
+Step 3 — Expense Module builds entries:
+entries = [
+  { account: "Internet Expense",   debit: 5000, credit: 0    },
+  { account: "CGST Input Credit",  debit: 450,  credit: 0    },
+  { account: "SGST Input Credit",  debit: 450,  credit: 0    },
+  { account: "Bank Account",       debit: 0,    credit: 5900 },
+]
+
+Step 4 — Sends to Accounting Engine.
+
+Step 5 — Engine validates. Debit: 5900. Credit: 5900. Yes.
+
+Step 6 — Engine saves atomically.
+
+
+5) Scenario 5: Sales RETURN
+
+Step 1 — User clicks "Sales Return." 
+         API receives: original invoice ID, items being returned 
+         with quantities, reason for return.
+
+Step 2 — Sales Module calls GST Calculator.
+         Sends: return amount ₹2,000, HSN code, same state.
+         Returns: CGST ₹180, SGST ₹180.
+
+Step 3 — Sales Module calls Inventory Service.
+         "Add back 5 units of Item X to Warehouse A."
+         Stock increases.
+
+Step 4 — Sales Module builds entries:
+entries = [
+  { account: "Sales Return",          debit: 2000, credit: 0    },
+  { account: "CGST Payable",          debit: 180,  credit: 0    },
+  { account: "SGST Payable",          debit: 180,  credit: 0    },
+  { account: "Accounts Receivable",   debit: 0,    credit: 2360 },
+]
+
+Step 5 — Sends to Accounting Engine.
+
+Step 6 — Engine validates. Debit: 2360. Credit: 2360. Yes.
+
+Step 7 — Engine saves atomically.
+
+
+6) Scenario 6: Customer Pays
+
+
+Step 1 — User clicks "Record Payment."
+         API receives: customer ID, amount ₹11,800, 
+         bank account, invoice reference.
+
+Step 2 — No GST. No Inventory. Just money moving.
+
+Step 3 — Build entries:
+entries = [
+  { account: "Bank Account",           debit: 11800, credit: 0     },
+  { account: "Accounts Receivable",    debit: 0,     credit: 11800 },
+]
+
+Step 4 — Send to Accounting Engine.
+
+Step 5 — Engine validates. Debit: 11800. Credit: 11800. Yes.
+
+Step 6 — Engine saves.
+
+
+
+Transaction Cheat Sheet:
+Sales Invoice      → GST + Inventory (stock DOWN) + Accounting Engine
+Purchase Invoice   → GST + Inventory (stock UP) + Accounting Engine
+Customer Payment   → Accounting Engine ONLY
+Supplier Payment   → Accounting Engine ONLY
+Business Expense   → GST + Accounting Engine (no inventory)
+Sales Return       → GST + Inventory (stock UP) + Accounting Engine
+Purchase Return    → GST + Inventory (stock DOWN) + Accounting Engine
+
+
+The Accounting Engine is intentionally dumb. It does not know what a sale or purchase is. It receives entries, 
+validates the balance, and saves. All business intelligence lives in the calling module.
