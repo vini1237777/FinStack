@@ -65,7 +65,6 @@ router.delete(
   },
 );
 
-// ========== SUPPLIERS ==========
 router.post("/suppliers", async (req: Request, res: Response) => {
   try {
     const supplier = await supplierService.create(req.body);
