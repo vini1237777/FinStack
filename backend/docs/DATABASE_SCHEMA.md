@@ -477,7 +477,3 @@ CREATE TABLE audit_logs (
   created_at TIMESTAMP DEFAULT NOW()
 );
 ```
-
-# <<<<<<< HEAD
-
-> > > > > > > 64f1efca147aa6acbafc91a847f97bc49ca8be50
