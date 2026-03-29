@@ -43,23 +43,25 @@
 
 - audit_logs
 
+# FinStack Database Schema
+
+---
+
 ## Modules
 
-- [Master Tables](#master-tables)
-- [Accounting Tables](#accounting-tables)
-- [Sales Tables](#sales-tables)
-- [Purchase Tables](#purchase-tables)
-- [Inventory Tables](#inventory-tables)
-- [Expense Tables](#expense-tables)
-- [System Tables](#system-tables)
+- Master Tables
+- Accounting Tables
+- Sales Tables
+- Purchase Tables
+- Inventory Tables
+- Expense Tables
+- System Tables
 
 ---
 
 ## Master Tables
 
 ### `users`
-
-Stores application users and their roles.
 
 ```sql
 CREATE TABLE users (
@@ -75,16 +77,7 @@ CREATE TABLE users (
 );
 ```
 
-**Notes**
-
-- Password must be stored as a bcrypt hash.
-- Example roles: `admin`, `accountant`, `sales_exec`, `purchase_exec`, `manager`.
-
----
-
 ### `customers`
-
-Stores customer information used for sales and GST calculation.
 
 ```sql
 CREATE TABLE customers (
@@ -101,16 +94,7 @@ CREATE TABLE customers (
 );
 ```
 
-**Notes**
-
-- `state_code` is required to determine intra-state vs inter-state GST.
-- `gstin` can be unique where available.
-
----
-
 ### `suppliers`
-
-Stores supplier/vendor details used for purchases and expenses.
 
 ```sql
 CREATE TABLE suppliers (
@@ -127,15 +111,7 @@ CREATE TABLE suppliers (
 );
 ```
 
-**Notes**
-
-- Supplier GSTIN may be optional in business scenarios, but uniqueness should still apply when present.
-
----
-
 ### `item_categories`
-
-Stores item classification.
 
 ```sql
 CREATE TABLE item_categories (
@@ -147,11 +123,7 @@ CREATE TABLE item_categories (
 );
 ```
 
----
-
 ### `items`
-
-Stores inventory or saleable item definitions.
 
 ```sql
 CREATE TABLE items (
@@ -168,16 +140,7 @@ CREATE TABLE items (
 );
 ```
 
-**Notes**
-
-- Monetary values are stored in **paise**.
-- `hsn_code` links item taxation to GST slabs.
-
----
-
 ### `warehouses`
-
-Stores inventory locations.
 
 ```sql
 CREATE TABLE warehouses (
@@ -190,11 +153,7 @@ CREATE TABLE warehouses (
 );
 ```
 
----
-
 ### `hsn_sac_codes`
-
-Stores HSN/SAC code mapping with GST rates.
 
 ```sql
 CREATE TABLE hsn_sac_codes (
@@ -207,17 +166,7 @@ CREATE TABLE hsn_sac_codes (
 );
 ```
 
-**Notes**
-
-- `type` can be:
-  - `HSN` for goods
-  - `SAC` for services
-
----
-
 ### `financial_years`
-
-Stores accounting year boundaries.
 
 ```sql
 CREATE TABLE financial_years (
@@ -230,17 +179,11 @@ CREATE TABLE financial_years (
 );
 ```
 
-**Notes**
-
-- Only one financial year should be active at a time.
-
 ---
 
 ## Accounting Tables
 
 ### `ledger_accounts`
-
-Stores the chart of accounts and account hierarchy.
 
 ```sql
 CREATE TABLE ledger_accounts (
@@ -257,17 +200,7 @@ CREATE TABLE ledger_accounts (
 );
 ```
 
-**Notes**
-
-- Example `account_type`: `ASSET`, `LIABILITY`, `INCOME`, `EXPENSE`
-- `parent_id` supports hierarchical ledgers.
-- `is_system` is useful for built-in accounts like GST ledgers.
-
----
-
 ### `vouchers`
-
-Stores accounting transactions.
 
 ```sql
 CREATE TABLE vouchers (
@@ -285,15 +218,7 @@ CREATE TABLE vouchers (
 );
 ```
 
-**Notes**
-
-- Example `voucher_type`: `SALES`, `PURCHASE`, `PAYMENT`, `EXPENSE`, `JOURNAL`
-
----
-
 ### `ledger_entries`
-
-Stores debit and credit lines for each voucher.
 
 ```sql
 CREATE TABLE ledger_entries (
@@ -310,18 +235,11 @@ CREATE TABLE ledger_entries (
 );
 ```
 
-**Notes**
-
-- One voucher can have multiple ledger entries.
-- `entry_order` preserves posting sequence.
-
 ---
 
 ## Sales Tables
 
 ### `sales_invoices`
-
-Stores sales invoice headers.
 
 ```sql
 CREATE TABLE sales_invoices (
@@ -343,17 +261,7 @@ CREATE TABLE sales_invoices (
 );
 ```
 
-**Notes**
-
-- `total_amount` = taxable value before tax
-- `grand_total` = taxable value + GST
-- Example status: `DRAFT`, `CONFIRMED`, `CANCELLED`
-
----
-
 ### `sales_invoice_items`
-
-Stores line items for sales invoices.
 
 ```sql
 CREATE TABLE sales_invoice_items (
@@ -373,11 +281,7 @@ CREATE TABLE sales_invoice_items (
 );
 ```
 
----
-
 ### `sales_returns`
-
-Stores sales return headers.
 
 ```sql
 CREATE TABLE sales_returns (
@@ -399,11 +303,7 @@ CREATE TABLE sales_returns (
 );
 ```
 
----
-
 ### `sales_return_items`
-
-Stores sales return line items.
 
 ```sql
 CREATE TABLE sales_return_items (
@@ -430,8 +330,6 @@ CREATE TABLE sales_return_items (
 
 ### `purchase_invoices`
 
-Stores purchase invoice headers.
-
 ```sql
 CREATE TABLE purchase_invoices (
   id UUID PRIMARY KEY,
@@ -452,11 +350,7 @@ CREATE TABLE purchase_invoices (
 );
 ```
 
----
-
 ### `purchase_invoice_items`
-
-Stores line items for purchase invoices.
 
 ```sql
 CREATE TABLE purchase_invoice_items (
@@ -476,11 +370,7 @@ CREATE TABLE purchase_invoice_items (
 );
 ```
 
----
-
 ### `purchase_returns`
-
-Stores purchase return headers.
 
 ```sql
 CREATE TABLE purchase_returns (
@@ -502,11 +392,7 @@ CREATE TABLE purchase_returns (
 );
 ```
 
----
-
 ### `purchase_return_items`
-
-Stores purchase return line items.
 
 ```sql
 CREATE TABLE purchase_return_items (
@@ -533,8 +419,6 @@ CREATE TABLE purchase_return_items (
 
 ### `stock_movements`
 
-Tracks stock inflow and outflow.
-
 ```sql
 CREATE TABLE stock_movements (
   id UUID PRIMARY KEY,
@@ -549,18 +433,11 @@ CREATE TABLE stock_movements (
 );
 ```
 
-**Notes**
-
-- Example `movement_type`: `IN`, `OUT`
-- Example `reference_type`: `SALES_INVOICE`, `PURCHASE_INVOICE`, `ADJUSTMENT`
-
 ---
 
 ## Expense Tables
 
 ### `expense_vouchers`
-
-Stores operational expenses with optional GST breakup.
 
 ```sql
 CREATE TABLE expense_vouchers (
@@ -583,17 +460,11 @@ CREATE TABLE expense_vouchers (
 );
 ```
 
-**Notes**
-
-- Example `payment_mode`: `CASH`, `BANK`
-
 ---
 
 ## System Tables
 
 ### `audit_logs`
-
-Stores record-level audit history.
 
 ```sql
 CREATE TABLE audit_logs (
@@ -608,44 +479,3 @@ CREATE TABLE audit_logs (
   created_at TIMESTAMP DEFAULT NOW()
 );
 ```
-
-**Notes**
-
-- `old_value` and `new_value` can store JSON snapshots.
-- Example `action`: `CREATE`, `UPDATE`, `DELETE`
-
----
-
-## Naming Conventions
-
-- Use `UUID` for primary keys.
-- Store money in **paise** to avoid floating-point issues.
-- Use `created_at` and `updated_at` timestamps consistently.
-- Keep status and type fields controlled at the application or DB constraint level.
-
----
-
-## Suggested Improvements
-
-These are worth adding later if this becomes production-grade:
-
-- `CHECK` constraints for enum-like fields
-- indexes on frequent lookup columns
-- `ON DELETE` / `ON UPDATE` strategies for foreign keys
-- soft deletes where needed
-- separate GST ledger/account mapping tables
-- stock valuation method support (FIFO / weighted average)
-- attachment/document tables for invoices and vouchers
-
----
-
-## Summary
-
-This schema is designed to support:
-
-- GST-compliant sales and purchase flows
-- double-entry accounting
-- stock tracking
-- returns management
-- expense recording
-- auditability
