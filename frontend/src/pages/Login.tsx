@@ -3,70 +3,89 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [user, setUser] = useState<{ email: string; password: string }>({
-    email: "",
-    password: "",
-  });
-  const [error, setError] = useState<string | null>(null);
-
+  const [email, setEmail] = useState("admin@finstack.com");
+  const [password, setPassword] = useState("admin123");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
-      await login(user.email, user.password);
+      setError("");
+      setLoading(true);
+      await login(email, password);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err);
+      setError(err.response?.data?.error || "Login failed");
+    } finally {
+      setLoading(false);
     }
-  };
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    setUser((prev) => {
-      return {
-        ...prev,
-        [name]: value,
-      };
-    });
   };
 
   return (
-    <div className="flex items-center flex-col  justify-center h-screen">
-      <h1 className="text-amber-800 text-4xl font-bold justify-center mb-7">
-        Login Page
-      </h1>
-      <div className="text-left justify-between gap-5 flex flex-col">
-        <div className="flex flex-column gap-5">
-          <div>Email Id</div>
-          <input
-            placeholder="Email Id"
-            name="email"
-            onChange={handleChange}
-            className="border-2"
-          />
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white tracking-tight">
+            <span className="text-emerald-400">Fin</span>Stack
+          </h1>
+          <p className="text-slate-400 mt-2 text-sm">
+            ERP Accounting & GST Management
+          </p>
         </div>
-        <div className="flex flex-column justify-center gap-2">
-          <div>Password</div>
-          <input
-            placeholder="Password"
-            name="password"
-            onChange={handleChange}
-            type="password"
-            className="border-2"
-          />
+
+        <div className="bg-white rounded-xl shadow-2xl p-8">
+          <h2 className="text-xl font-semibold mb-6" style={{ color: "black" }}>
+            Sign in to your account
+          </h2>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg mb-4">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@finstack.com"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <button
+              onClick={handleLogin}
+              disabled={loading}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 rounded-lg transition-colors duration-200 text-sm disabled:opacity-50"
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
+          </div>
         </div>
-        <div className="flex justify-center">
-          <button
-            className="flex flex-col bg-blue-950 ml-12 justify-center text-white pr-5 pl-5 pt-1 pb-1"
-            onClick={handleLogin}
-          >
-            Submit
-          </button>
-        </div>
+
+        <p className="text-center text-slate-500 text-xs mt-6">
+          Double-entry Accounting • GST Compliance • Inventory Management
+        </p>
       </div>
-      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 };
