@@ -1,7 +1,7 @@
 const Features = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      <div className="max-w-5xl mx-auto px-6 pb-16">
+      <div className="max-w-5xl mx-auto px-6 pt-10 pb-16">
         <h2 className="text-sm uppercase tracking-widest text-slate-500 mb-6">
           How It Works
         </h2>
