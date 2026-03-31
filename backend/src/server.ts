@@ -16,7 +16,11 @@ const PORT = process.env.PORT || 3000;
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://finstack.vercel.app"],
+    origin: [
+      "http://localhost:5173",
+      "https://fin-stack-d0bjq1svg-vinisha699gmailcoms-projects.vercel.app/",
+      "https://fin-stack-nine.vercel.app",
+    ],
     credentials: true,
   }),
 );
