@@ -20,9 +20,22 @@ interface CreateSalesInvoiceInput {
 
 export const salesService = {
   async createInvoice(input: CreateSalesInvoiceInput, userId: string) {
+    for (const item of input.items) {
+      const hsnExists = await prisma.hsnSacCode.findFirst({
+        where: { code: item.hsnCode },
+      });
+      if (!hsnExists) {
+        throw new Error(
+          `HSN/SAC code ${item.hsnCode} not found. Add it before creating invoice.`,
+        );
+      }
+    }
+
     const customer = await prisma.customer.findUnique({
       where: { id: input.customerId },
     });
+    if (!customer) throw new Error("Customer not found");
+
     if (!customer) throw new Error("Customer not found");
 
     const companyState = "MH";
