@@ -20,16 +20,19 @@ app.use(
 );
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.json({ message: "FinStack API running" });
-});
-
 app.use("/auth", authRoutes);
 app.use("/masters", mastersRoutes);
 app.use("/sales", salesRoutes);
 app.use("/purchase", purchaseRoutes);
 app.use("/expenses", expenseRoutes);
 app.use("/reports", reportsRoutes);
+
+import path from "path";
+
+app.use(express.static(path.join(__dirname, "../../frontend/dist")));
+app.get("/{*path}", (req, res) => {
+  res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
