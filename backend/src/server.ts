@@ -17,7 +17,8 @@ const PORT = process.env.PORT || 3000;
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:3000",
       "https://fin-stack-d0bjq1svg-vinisha699gmailcoms-projects.vercel.app/",
       "https://fin-stack-nine.vercel.app",
     ],
