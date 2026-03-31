@@ -9,7 +9,7 @@ A modular ERP system for Indian SMEs with double-entry accounting, GST complianc
 
 ## Tech Stack
 
-- Frontend: React 19, TypeScript, Tailwind CSS, Vite
+- Frontend: React, TypeScript, Tailwind CSS, Vite
 - Backend: Node.js, Express, TypeScript
 - Database: PostgreSQL with Prisma ORM
 - Auth: JWT with role-based access control
