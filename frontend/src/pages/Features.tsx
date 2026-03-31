@@ -1,13 +1,6 @@
 const Features = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      <div className="max-w-5xl mx-auto px-6 py-16 text-center">
-        <p className="text-slate-400 mt-3 text-lg max-w-6xl mx-auto">
-          A modular ERP system for Indian SMEs, a double-entry accounting, GST
-          compliance, and inventory management in a single platform.
-        </p>
-      </div>
-
       <div className="max-w-5xl mx-auto px-6 pb-16">
         <h2 className="text-sm uppercase tracking-widest text-slate-500 mb-6">
           How It Works
