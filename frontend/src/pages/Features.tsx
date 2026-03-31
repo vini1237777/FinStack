@@ -221,19 +221,6 @@ const Features = () => {
           ))}
         </div>
       </div>
-
-      <div className="border-t border-slate-800 py-6 text-center">
-        <p className="text-xs text-slate-500">
-          Built by Vinisha Yadav —
-          <a
-            href="https://github.com/vini1237777/FinStack"
-            target="_blank"
-            className="text-slate-400 hover:text-white ml-1"
-          >
-            GitHub
-          </a>
-        </p>
-      </div>
     </div>
   );
 };
