@@ -7,6 +7,7 @@ import salesRoutes from "./modules/sales/sales.routes";
 import purchaseRoutes from "./modules/purchase/purchase.routes";
 import expenseRoutes from "./modules/expenses/expense.routes";
 import reportsRoutes from "./modules/reports/reports.routes";
+import path from "path";
 
 dotenv.config();
 
@@ -27,11 +28,9 @@ app.use("/purchase", purchaseRoutes);
 app.use("/expenses", expenseRoutes);
 app.use("/reports", reportsRoutes);
 
-import path from "path";
-
-app.use(express.static(path.join(__dirname, "../../frontend/dist")));
+app.use(express.static(path.join(process.cwd(), "public")));
 app.get("/{*path}", (req, res) => {
-  res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
+  res.sendFile(path.join(process.cwd(), "public", "index.html"));
 });
 
 app.listen(PORT, () => {
