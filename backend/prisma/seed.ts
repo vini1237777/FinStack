@@ -177,6 +177,67 @@ async function main() {
   console.log("Item Categories created");
 
   console.log("\nSeed completed successfully!");
+
+  await prisma.supplier.upsert({
+    where: { gstin: "06AABCD1234E1Z5" },
+    update: {},
+    create: {
+      name: "Dell India",
+      gstin: "06AABCD1234E1Z5",
+      stateCode: "GJ",
+      email: "sales@dell.in",
+    },
+  });
+  await prisma.supplier.upsert({
+    where: { gstin: "27AABCS5678F1ZM" },
+    update: {},
+    create: {
+      name: "HP India",
+      gstin: "27AABCS5678F1ZM",
+      stateCode: "MH",
+      email: "sales@hp.in",
+    },
+  });
+
+  await prisma.customer.upsert({
+    where: { gstin: "27AABCR1718E1ZM" },
+    update: {},
+    create: {
+      name: "Reliance Industries",
+      gstin: "27AABCR1718E1ZM",
+      stateCode: "MH",
+      email: "info@reliance.com",
+    },
+  });
+  await prisma.customer.upsert({
+    where: { gstin: "29AABCI1234F1Z5" },
+    update: {},
+    create: {
+      name: "Infosys",
+      gstin: "29AABCI1234F1Z5",
+      stateCode: "KA",
+      email: "info@infosys.com",
+    },
+  });
+  console.log("Customers created");
+
+  const electronicsCategory = await prisma.itemCategory.findFirst({
+    where: { name: "Electronics" },
+  });
+  if (electronicsCategory) {
+    await prisma.item.upsert({
+      where: { id: "default-laptop" },
+      update: {},
+      create: {
+        name: "Laptop",
+        hsnCode: "8471",
+        categoryId: electronicsCategory.id,
+        unit: "pieces",
+        costPrice: 5000000,
+        sellingPrice: 7000000,
+      },
+    });
+  }
 }
 
 main()
