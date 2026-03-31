@@ -14,10 +14,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://finstack.vercel.app"],
+    credentials: true,
+  }),
+);
 
-app.use(express.static(path.join(process.cwd(), "public")));
+app.use(express.json());
 
 app.use("/auth", authRoutes);
 app.use("/masters", mastersRoutes);
@@ -25,10 +29,6 @@ app.use("/sales", salesRoutes);
 app.use("/purchase", purchaseRoutes);
 app.use("/expenses", expenseRoutes);
 app.use("/reports", reportsRoutes);
-
-app.get("/{*path}", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "index.html"));
-});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
