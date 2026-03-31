@@ -6,15 +6,6 @@ const Features = () => {
           A modular ERP system for Indian SMEs, a double-entry accounting, GST
           compliance, and inventory management in a single platform.
         </p>
-        <div className="flex gap-3 justify-center mt-6">
-          <a
-            href="https://github.com/vini1237777/FinStack"
-            target="_blank"
-            className="border border-slate-600 hover:border-slate-400 text-slate-300 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          >
-            View Github Repository
-          </a>
-        </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 pb-16">
