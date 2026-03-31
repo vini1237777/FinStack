@@ -20,7 +20,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem("user");
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const [token, setToken] = useState<string | null>(
     localStorage.getItem("token"),
@@ -31,6 +34,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { token, user } = response.data.data;
 
     localStorage.setItem("token", token);
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      }),
+    );
 
     setToken(token);
     setUser({
@@ -43,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setToken(null);
     setUser(null);
   };
