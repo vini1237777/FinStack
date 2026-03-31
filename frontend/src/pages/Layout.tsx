@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const navItems = [
+  { path: "/features", label: "Features", icon: "" },
   { path: "/dashboard", label: "Dashboard", icon: "" },
   { path: "/customers", label: "Customers", icon: "" },
   { path: "/items", label: "Items", icon: "" },
@@ -64,6 +65,15 @@ const Layout = () => {
             );
           })}
         </nav>
+        <div className="border-t border-slate-100 px-3 py-3">
+          <a
+            href="https://github.com/vini1237777/FinStack"
+            target="_blank"
+            className="block px-3 py-2 rounded-md text-sm text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+          >
+            GitHub Repo ↗
+          </a>
+        </div>
 
         <div className="px-3 py-4 border-t border-slate-700">
           <button
@@ -87,7 +97,7 @@ const Layout = () => {
           <div className="text-xs text-slate-400">FY 2025-26</div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4">
           <Outlet />
         </div>
       </main>

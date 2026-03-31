@@ -10,6 +10,7 @@ import PurchaseInvoices from "./pages/PurchaseInvoices";
 import Expenses from "./pages/Expenses";
 import Reports from "./pages/Reports";
 import Layout from "./pages/Layout";
+import Features from "./pages/Features";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/purchase" element={<PurchaseInvoices />} />
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/features" element={<Features />} />
           </Route>
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
