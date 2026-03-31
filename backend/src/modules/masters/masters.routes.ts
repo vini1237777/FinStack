@@ -5,6 +5,7 @@ import { itemService } from "./item.service";
 import { authenticate } from "../../middleware/auth";
 import { authorize } from "../../middleware/rbac";
 import { inventoryService } from "../inventory/inventory.service";
+import prisma from "../../config/database";
 
 const router = Router();
 
@@ -178,6 +179,33 @@ router.post("/stock-in", async (req: Request, res: Response) => {
     res.status(201).json({ data: movement });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.get("/categories", async (req: Request, res: Response) => {
+  try {
+    const categories = await prisma.itemCategory.findMany();
+    res.json({ data: categories });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/warehouses", async (req: Request, res: Response) => {
+  try {
+    const warehouses = await prisma.warehouse.findMany();
+    res.json({ data: warehouses });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/financial-years", async (req: Request, res: Response) => {
+  try {
+    const years = await prisma.financialYear.findMany();
+    res.json({ data: years });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 
