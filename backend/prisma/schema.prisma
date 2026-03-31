@@ -1,0 +1,484 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// MASTER TABLES
+// ==========================================
+
+model User {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  phone     String?  @db.VarChar(20)
+  role      String   @default("sales_exec") @db.VarChar(20)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vouchers         Voucher[]
+  salesInvoices    SalesInvoice[]
+  purchaseInvoices PurchaseInvoice[]
+  salesReturns     SalesReturn[]
+  purchaseReturns  PurchaseReturn[]
+  expenseVouchers  ExpenseVoucher[]
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(255)
+  gstin     String?  @unique @db.VarChar(15)
+  stateCode String   @db.Char(2)
+  email     String?  @db.VarChar(255)
+  phone     String?  @db.VarChar(20)
+  address   String?
+  pincode   String?  @db.VarChar(6)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  salesInvoices SalesInvoice[]
+  salesReturns  SalesReturn[]
+
+  @@map("customers")
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(255)
+  gstin     String?  @unique @db.VarChar(15)
+  stateCode String   @db.Char(2)
+  email     String?  @db.VarChar(255)
+  phone     String?  @db.VarChar(20)
+  address   String?
+  pincode   String?  @db.VarChar(6)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseInvoices PurchaseInvoice[]
+  purchaseReturns  PurchaseReturn[]
+  expenseVouchers  ExpenseVoucher[]
+
+  @@map("suppliers")
+}
+
+model ItemCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique @db.VarChar(255)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items Item[]
+
+  @@map("item_categories")
+}
+
+model Item {
+  id           String   @id @default(uuid())
+  name         String   @db.VarChar(255)
+  description  String?
+  hsnCode      String   @db.VarChar(8)
+  categoryId   String
+  category     ItemCategory @relation(fields: [categoryId], references: [id])
+  unit         String   @db.VarChar(20)
+  costPrice    Int
+  sellingPrice Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  salesInvoiceItems    SalesInvoiceItem[]
+  salesReturnItems     SalesReturnItem[]
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+  purchaseReturnItems  PurchaseReturnItem[]
+  stockMovements       StockMovement[]
+
+  @@map("items")
+}
+
+model Warehouse {
+  id          String   @id @default(uuid())
+  name        String   @unique @db.VarChar(255)
+  description String?
+  location    String?  @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stockMovements      StockMovement[]
+  salesReturnItems    SalesReturnItem[]
+  purchaseReturnItems PurchaseReturnItem[]
+
+  @@map("warehouses")
+}
+
+model HsnSacCode {
+  id          String   @id @default(uuid())
+  code        String   @unique @db.VarChar(8)
+  description String   @db.VarChar(255)
+  gstRate     Int
+  type        String   @db.VarChar(3)
+  createdAt   DateTime @default(now())
+
+  @@map("hsn_sac_codes")
+}
+
+model FinancialYear {
+  id        String   @id @default(uuid())
+  name      String   @unique @db.VarChar(10)
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  vouchers         Voucher[]
+  ledgerEntries    LedgerEntry[]
+  salesInvoices    SalesInvoice[]
+  purchaseInvoices PurchaseInvoice[]
+  salesReturns     SalesReturn[]
+  purchaseReturns  PurchaseReturn[]
+  expenseVouchers  ExpenseVoucher[]
+
+  @@map("financial_years")
+}
+
+// ==========================================
+// ACCOUNTING TABLES
+// ==========================================
+
+model LedgerAccount {
+  id             String   @id @default(uuid())
+  name           String   @db.VarChar(255)
+  code           String?  @unique @db.VarChar(20)
+  accountType    String   @db.VarChar(20)
+  accountGroup   String   @db.VarChar(50)
+  parentId       String?
+  parent         LedgerAccount?  @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children       LedgerAccount[] @relation("AccountHierarchy")
+  currentBalance Int      @default(0)
+  isSystem       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  ledgerEntries LedgerEntry[]
+
+  @@map("ledger_accounts")
+}
+
+model Voucher {
+  id              String   @id @default(uuid())
+  voucherNumber   String   @unique @db.VarChar(50)
+  voucherType     String   @db.VarChar(20)
+  date            DateTime @db.Date
+  financialYearId String
+  financialYear   FinancialYear @relation(fields: [financialYearId], references: [id])
+  referenceModule String?  @db.VarChar(50)
+  referenceId     String?
+  narration       String
+  totalAmount     Int
+  createdBy       String
+  creator         User @relation(fields: [createdBy], references: [id])
+  createdAt       DateTime @default(now())
+
+  ledgerEntries    LedgerEntry[]
+  salesInvoices    SalesInvoice[]
+  purchaseInvoices PurchaseInvoice[]
+  salesReturns     SalesReturn[]
+  purchaseReturns  PurchaseReturn[]
+  expenseVouchers  ExpenseVoucher[]
+
+  @@map("vouchers")
+}
+
+model LedgerEntry {
+  id              String        @id @default(uuid())
+  voucherId       String
+  voucher         Voucher       @relation(fields: [voucherId], references: [id])
+  ledgerAccountId String
+  ledgerAccount   LedgerAccount @relation(fields: [ledgerAccountId], references: [id])
+  debit           Int           @default(0)
+  credit          Int           @default(0)
+  narration       String?
+  entryOrder      Int
+  date            DateTime      @db.Date
+  financialYearId String
+  financialYear   FinancialYear @relation(fields: [financialYearId], references: [id])
+  createdAt       DateTime      @default(now())
+
+  @@map("ledger_entries")
+}
+
+// ==========================================
+// SALES TABLES
+// ==========================================
+
+model SalesInvoice {
+  id              String   @id @default(uuid())
+  invoiceNumber   String   @unique @db.VarChar(50)
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id])
+  invoiceDate     DateTime @db.Date
+  financialYearId String
+  financialYear   FinancialYear @relation(fields: [financialYearId], references: [id])
+  totalAmount     Int
+  cgstTotal       Int      @default(0)
+  sgstTotal       Int      @default(0)
+  igstTotal       Int      @default(0)
+  grandTotal      Int
+  status          String   @default("DRAFT") @db.VarChar(20)
+  voucherId       String?
+  voucher         Voucher? @relation(fields: [voucherId], references: [id])
+  createdBy       String
+  creator         User @relation(fields: [createdBy], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items        SalesInvoiceItem[]
+  salesReturns SalesReturn[]
+
+  @@map("sales_invoices")
+}
+
+model SalesInvoiceItem {
+  id             String       @id @default(uuid())
+  salesInvoiceId String
+  salesInvoice   SalesInvoice @relation(fields: [salesInvoiceId], references: [id])
+  itemId         String
+  item           Item @relation(fields: [itemId], references: [id])
+  hsnCode        String       @db.VarChar(8)
+  quantity       Int
+  unitPrice      Int
+  taxableAmount  Int
+  gstRate        Int
+  cgstAmount     Int          @default(0)
+  sgstAmount     Int          @default(0)
+  igstAmount     Int          @default(0)
+  totalAmount    Int
+  createdAt      DateTime     @default(now())
+
+  @@map("sales_invoice_items")
+}
+
+model SalesReturn {
+  id              String       @id @default(uuid())
+  returnNumber    String       @unique @db.VarChar(50)
+  salesInvoiceId  String
+  salesInvoice    SalesInvoice @relation(fields: [salesInvoiceId], references: [id])
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id])
+  returnDate      DateTime     @db.Date
+  reason          String
+  financialYearId String
+  financialYear   FinancialYear @relation(fields: [financialYearId], references: [id])
+  totalAmount     Int
+  cgstTotal       Int          @default(0)
+  sgstTotal       Int          @default(0)
+  igstTotal       Int          @default(0)
+  grandTotal      Int
+  voucherId       String?
+  voucher         Voucher? @relation(fields: [voucherId], references: [id])
+  createdBy       String
+  creator         User @relation(fields: [createdBy], references: [id])
+  createdAt       DateTime     @default(now())
+
+  items SalesReturnItem[]
+
+  @@map("sales_returns")
+}
+
+model SalesReturnItem {
+  id            String      @id @default(uuid())
+  salesReturnId String
+  salesReturn   SalesReturn @relation(fields: [salesReturnId], references: [id])
+  itemId        String
+  item          Item @relation(fields: [itemId], references: [id])
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id])
+  hsnCode       String      @db.VarChar(8)
+  quantity      Int
+  unitPrice     Int
+  taxableAmount Int
+  gstRate       Int
+  cgstAmount    Int         @default(0)
+  sgstAmount    Int         @default(0)
+  igstAmount    Int         @default(0)
+  totalAmount   Int
+  createdAt     DateTime    @default(now())
+
+  @@map("sales_return_items")
+}
+
+// ==========================================
+// PURCHASE TABLES
+// ==========================================
+
+model PurchaseInvoice {
+  id              String   @id @default(uuid())
+  invoiceNumber   String   @unique @db.VarChar(50)
+  supplierId      String
+  supplier        Supplier @relation(fields: [supplierId], references: [id])
+  invoiceDate     DateTime @db.Date
+  financialYearId String
+  financialYear   FinancialYear @relation(fields: [financialYearId], references: [id])
+  totalAmount     Int
+  cgstTotal       Int      @default(0)
+  sgstTotal       Int      @default(0)
+  igstTotal       Int      @default(0)
+  grandTotal      Int
+  status          String   @default("DRAFT") @db.VarChar(20)
+  voucherId       String?
+  voucher         Voucher? @relation(fields: [voucherId], references: [id])
+  createdBy       String
+  creator         User @relation(fields: [createdBy], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items           PurchaseInvoiceItem[]
+  purchaseReturns PurchaseReturn[]
+
+  @@map("purchase_invoices")
+}
+
+model PurchaseInvoiceItem {
+  id                String          @id @default(uuid())
+  purchaseInvoiceId String
+  purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id])
+  itemId            String
+  item              Item @relation(fields: [itemId], references: [id])
+  hsnCode           String          @db.VarChar(8)
+  quantity          Int
+  unitPrice         Int
+  taxableAmount     Int
+  gstRate           Int
+  cgstAmount        Int             @default(0)
+  sgstAmount        Int             @default(0)
+  igstAmount        Int             @default(0)
+  totalAmount       Int
+  createdAt         DateTime        @default(now())
+
+  @@map("purchase_invoice_items")
+}
+
+model PurchaseReturn {
+  id                String          @id @default(uuid())
+  returnNumber      String          @unique @db.VarChar(50)
+  purchaseInvoiceId String
+  purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id])
+  supplierId        String
+  supplier          Supplier @relation(fields: [supplierId], references: [id])
+  returnDate        DateTime        @db.Date
+  reason            String
+  financialYearId   String
+  financialYear     FinancialYear @relation(fields: [financialYearId], references: [id])
+  totalAmount       Int
+  cgstTotal         Int             @default(0)
+  sgstTotal         Int             @default(0)
+  igstTotal         Int             @default(0)
+  grandTotal        Int
+  voucherId         String?
+  voucher           Voucher? @relation(fields: [voucherId], references: [id])
+  createdBy         String
+  creator           User @relation(fields: [createdBy], references: [id])
+  createdAt         DateTime        @default(now())
+
+  items PurchaseReturnItem[]
+
+  @@map("purchase_returns")
+}
+
+model PurchaseReturnItem {
+  id               String         @id @default(uuid())
+  purchaseReturnId String
+  purchaseReturn   PurchaseReturn @relation(fields: [purchaseReturnId], references: [id])
+  itemId           String
+  item             Item @relation(fields: [itemId], references: [id])
+  warehouseId      String
+  warehouse        Warehouse @relation(fields: [warehouseId], references: [id])
+  hsnCode          String         @db.VarChar(8)
+  quantity         Int
+  unitPrice        Int
+  taxableAmount    Int
+  gstRate          Int
+  cgstAmount       Int            @default(0)
+  sgstAmount       Int            @default(0)
+  igstAmount       Int            @default(0)
+  totalAmount      Int
+  createdAt        DateTime       @default(now())
+
+  @@map("purchase_return_items")
+}
+
+// ==========================================
+// INVENTORY TABLES
+// ==========================================
+
+model StockMovement {
+  id            String   @id @default(uuid())
+  itemId        String
+  item          Item @relation(fields: [itemId], references: [id])
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id])
+  movementType  String   @db.VarChar(10)
+  quantity      Int
+  referenceType String   @db.VarChar(50)
+  referenceId   String
+  date          DateTime @db.Date
+  createdAt     DateTime @default(now())
+
+  @@map("stock_movements")
+}
+
+// ==========================================
+// EXPENSE TABLES
+// ==========================================
+
+model ExpenseVoucher {
+  id              String   @id @default(uuid())
+  expenseHead     String   @db.VarChar(255)
+  supplierId      String?
+  supplier        Supplier? @relation(fields: [supplierId], references: [id])
+  date            DateTime @db.Date
+  financialYearId String
+  financialYear   FinancialYear @relation(fields: [financialYearId], references: [id])
+  hsnSacCode      String?  @db.VarChar(8)
+  amount          Int
+  cgstAmount      Int      @default(0)
+  sgstAmount      Int      @default(0)
+  igstAmount      Int      @default(0)
+  totalAmount     Int
+  paymentMode     String   @db.VarChar(20)
+  voucherId       String?
+  voucher         Voucher? @relation(fields: [voucherId], references: [id])
+  createdBy       String
+  creator         User @relation(fields: [createdBy], references: [id])
+  narration       String?
+  createdAt       DateTime @default(now())
+
+  @@map("expense_vouchers")
+}
+
+// ==========================================
+// SYSTEM TABLES
+// ==========================================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User @relation(fields: [userId], references: [id])
+  action     String   @db.VarChar(20)
+  entityType String   @db.VarChar(50)
+  entityId   String
+  oldValue   String?
+  newValue   String?
+  ipAddress  String?  @db.VarChar(45)
+  createdAt  DateTime @default(now())
+
+  @@map("audit_logs")
+}
